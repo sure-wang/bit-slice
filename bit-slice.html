@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bit Slice - FPGA Bit 切片与对齐工具</title>
+    <style>
+        /* iOS / macOS 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* 主容器 - 苹果卡片风格 */
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 32px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* 标题 */
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 32px;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        /* 模块通用样式 */
+        .section {
+            margin-bottom: 28px;
+        }
+
+        .label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #48484a;
+            margin-bottom: 10px;
+            display: block;
+            letter-spacing: 0.3px;
+        }
+
+        /* 输入框组合（带历史图标） */
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .io-box {
+            flex: 1;
+            padding: 14px 16px;
+            border: 1px solid #e2e2e7;
+            border-radius: 12px;
+            font-size: 16px;
+            color: #1d1d1f;
+            outline: none;
+            transition: all 0.2s ease;
+            background: #fafafc;
+        }
+
+        .io-box:focus {
+            border-color: #007aff;
+            background: white;
+        }
+
+        /* 历史图标（纯CSS时钟图标） */
+        .history-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid #e2e2e7;
+            background: #fafafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-btn:hover {
+            background: #f2f2f7;
+        }
+
+        .clock-icon {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #86868b;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .clock-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 2px;
+            background: #86868b;
+            transform-origin: left center;
+            transform: rotate(-45deg);
+        }
+
+        .history-btn:hover .clock-icon {
+            border-color: #007aff;
+        }
+
+        .history-btn:hover .clock-icon::before {
+            background: #007aff;
+        }
+
+        /* 二进制显示区（空白初始化） */
+        .binary-box {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e2e2e7;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: "SF Mono", Menlo, Monaco, monospace;
+            color: #1d1d1f;
+            background: #fafafc;
+            min-height: 52px;
+            line-height: 1.5;
+            word-break: break-all;
+            white-space: pre-wrap; /* 保留空格和换行 */
+        }
+
+        /* 结果显示区 */
+        .result-box {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e2e2e7;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: "SF Mono", Menlo, Monaco, monospace;
+            color: #1d1d1f;
+            background: #f2f2f7;
+            min-height: 52px;
+            line-height: 1.5;
+            word-break: break-all;
+            cursor: default;
+            user-select: text;
+        }
+
+        /* 高亮样式 - 窗口黄色边框高亮（一整个连续边框） */
+        .window-highlight {
+            border: 2px solid #ffcc00;
+            border-radius: 4px;
+            padding: 2px 4px;
+            margin: 0 1px;
+            background-color: rgba(255, 204, 0, 0.05);
+        }
+
+        /* 匹配高亮 - 低饱和浅蓝背景 */
+        .match-highlight {
+            background-color: #e0f0ff;
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+
+        /* 控制区样式 */
+        .control-group {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .slider-container {
+            flex: 1;
+        }
+
+        .window-size-container {
+            width: 130px;
+        }
+
+        .sub-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #86868b;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* 滑动条样式（iOS风格） */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e2e7;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007aff;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e2e7;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        /* Bit匹配模块样式 */
+        .match-group {
+            display: flex;
+            gap: 12px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .match-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .type-switch {
+            padding: 10px 14px;
+            border: 1px solid #e2e2e7;
+            border-radius: 8px;
+            background: #fafafc;
+            cursor: pointer;
+            font-size: 14px;
+            color: #007aff;
+            transition: all 0.2s ease;
+        }
+
+        .type-switch:hover {
+            background: #e0efff;
+        }
+
+        .nav-btn {
+            padding: 10px 16px;
+            border: 1px solid #e2e2e7;
+            border-radius: 8px;
+            background: #fafafc;
+            cursor: pointer;
+            font-size: 14px;
+            color: #1d1d1f;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 历史记录弹窗 */
+        .history-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.1);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .history-panel {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .clear-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            background: #ff3b30;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .history-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            background: #f2f2f7;
+            font-family: monospace;
+        }
+
+        .history-item:hover {
+            background: #e2e2e7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">Bit Slice</div>
+
+        <!-- 原始十六进制数据 -->
+        <div class="section">
+            <span class="label">原始十六进制数据 (rxdata)</span>
+            <div class="input-group">
+                <input type="text" id="hexInput" class="io-box" placeholder="请输入十六进制数 (0-9, a-f, A-F)" maxlength="128">
+                <button class="history-btn" id="historyBtn" title="历史记录">
+                    <div class="clock-icon"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- 二进制可视化（空白初始化） -->
+        <div class="section">
+            <span class="label">二进制可视化</span>
+            <div id="binaryDisplay" class="binary-box"></div>
+        </div>
+
+        <!-- 切片控制 -->
+        <div class="section">
+            <span class="label">切片控制</span>
+            <div class="control-group">
+                <div class="slider-container">
+                    <span class="sub-label">拖动选择起始Bit</span>
+                    <input type="range" id="startBitSlider" min="0" max="0" value="0">
+                </div>
+                <div class="window-size-container">
+                    <span class="sub-label">窗口大小 w (bit)</span>
+                    <input type="number" id="windowSize" min="1" value="8">
+                </div>
+            </div>
+        </div>
+
+        <!-- Bit匹配功能模块 -->
+        <div class="section">
+            <span class="label">Bit序列匹配</span>
+            <div class="match-group">
+                <div class="match-input">
+                    <span class="sub-label">待匹配序列</span>
+                    <input type="text" id="matchInput" class="io-box" placeholder="输入十六进制（如7'h3F）">
+                </div>
+                <button id="typeSwitch" class="type-switch">十六进制</button>
+                <button id="prevMatch" class="nav-btn" disabled>上一个</button>
+                <button id="nextMatch" class="nav-btn" disabled>下一个</button>
+            </div>
+        </div>
+
+        <!-- 切片重组结果 -->
+        <div class="section">
+            <span class="label">切片重组十六进制结果</span>
+            <div id="resultOutput" class="result-box" contenteditable="false">无有效数据</div>
+        </div>
+    </div>
+
+    <!-- 历史记录弹窗 -->
+    <div class="history-modal" id="historyModal">
+        <div class="history-panel">
+            <div class="history-header">
+                <h3>输入历史记录</h3>
+                <button class="clear-btn" id="clearHistory">清空历史</button>
+            </div>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <script>
+        // DOM元素
+        const hexInput = document.getElementById('hexInput');
+        const binaryDisplay = document.getElementById('binaryDisplay');
+        const windowSizeInput = document.getElementById('windowSize');
+        const startBitSlider = document.getElementById('startBitSlider');
+        const resultOutput = document.getElementById('resultOutput');
+        const matchInput = document.getElementById('matchInput');
+        const typeSwitch = document.getElementById('typeSwitch');
+        const prevMatch = document.getElementById('prevMatch');
+        const nextMatch = document.getElementById('nextMatch');
+        const historyBtn = document.getElementById('historyBtn');
+        const historyModal = document.getElementById('historyModal');
+        const historyList = document.getElementById('historyList');
+        const clearHistory = document.getElementById('clearHistory');
+
+        // 全局变量
+        let currentGroups = [];
+        let currentStartBit = 0;
+        let currentWindowSize = 8;
+        let isHexMode = true;
+        let matchPositions = [];
+        let currentMatchIndex = -1;
+        let historyDebounceTimer = null;
+
+        // ==================== 基础转换函数 ====================
+        function hexToBinary(hex) {
+            if (!hex) return '';
+            return hex.split('').map(char => {
+                return parseInt(char, 16).toString(2).padStart(4, '0');
+            }).join('');
+        }
+
+        function binaryToHex(binary, padLength) {
+            if (!binary) return '';
+            const hex = parseInt(binary, 2).toString(16).toUpperCase();
+            return hex.padStart(padLength, '0');
+        }
+
+        // ==================== Verilog风格十六进制解析 ====================
+        function parseVerilogHex(input) {
+            const regex = /^(\d+)'[hH]([0-9a-fA-F]+)$/;
+            const match = input.match(regex);
+            
+            if (match) {
+                const bitWidth = parseInt(match[1]);
+                const hexValue = match[2];
+                // 先转换为完整二进制
+                let binary = hexToBinary(hexValue);
+                // 截断到指定bit宽度（取低位）
+                if (binary.length > bitWidth) {
+                    binary = binary.slice(-bitWidth);
+                }
+                // 不足补0
+                return binary.padStart(bitWidth, '0');
+            }
+            // 普通十六进制
+            return hexToBinary(input);
+        }
+
+        // ==================== 历史记录功能（防抖保存） ====================
+        const HISTORY_KEY = 'bit_slice_history';
+        const HISTORY_DEBOUNCE_DELAY = 1500; // 1.5秒防抖
+
+        // 加载历史
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            return history;
+        }
+
+        // 保存历史（防抖+去重）
+        function saveHistory(value) {
+            if (!value) return;
+            clearTimeout(historyDebounceTimer);
+            historyDebounceTimer = setTimeout(() => {
+                let history = loadHistory();
+                // 去重：移除已有相同记录
+                history = history.filter(item => item !== value);
+                // 插入到最前面
+                history.unshift(value);
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            }, HISTORY_DEBOUNCE_DELAY);
+        }
+
+        // 渲染历史列表
+        function renderHistory() {
+            const history = loadHistory();
+            historyList.innerHTML = '';
+            if (history.length === 0) {
+                historyList.innerHTML = '<div style="text-align:center;padding:20px;color:#86868b">暂无历史记录</div>';
+                return;
+            }
+            history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.textContent = item;
+                div.onclick = () => {
+                    hexInput.value = item;
+                    historyModal.style.display = 'none';
+                    updateAll();
+                };
+                historyList.appendChild(div);
+            });
+        }
+
+        // 历史事件绑定
+        historyBtn.onclick = () => {
+            renderHistory();
+            historyModal.style.display = 'flex';
+        };
+
+        historyModal.onclick = (e) => {
+            if (e.target === historyModal) historyModal.style.display = 'none';
+        };
+
+        clearHistory.onclick = () => {
+            if (confirm('确认清空所有输入历史记录？此操作不可恢复！')) {
+                localStorage.removeItem(HISTORY_KEY);
+                renderHistory();
+            }
+        };
+
+        // ==================== Bit匹配功能 ====================
+        function updatePlaceholder() {
+            if (isHexMode) {
+                matchInput.placeholder = '输入N\'hXX格式（如7\'h3F）';
+            } else {
+                matchInput.placeholder = '输入二进制序列（如0111111）';
+            }
+        }
+
+        function switchMatchType() {
+            isHexMode = !isHexMode;
+            typeSwitch.textContent = isHexMode ? '十六进制' : '二进制';
+            updatePlaceholder();
+            matchInput.value = '';
+            matchPositions = [];
+            currentMatchIndex = -1;
+            updateAll();
+        }
+
+        function findMatchPositions(binStr, target) {
+            const positions = [];
+            if (!binStr || !target || target.length === 0) return positions;
+            let idx = binStr.indexOf(target);
+            while (idx !== -1) {
+                positions.push(idx);
+                idx = binStr.indexOf(target, idx + 1);
+            }
+            return positions;
+        }
+
+        function updateMatchButtons() {
+            prevMatch.disabled = currentMatchIndex <= 0;
+            nextMatch.disabled = currentMatchIndex >= matchPositions.length - 1;
+        }
+
+        function jumpToMatch(index) {
+            if (matchPositions.length === 0 || index < 0 || index >= matchPositions.length) return;
+            currentMatchIndex = index;
+            currentStartBit = matchPositions[index];
+            startBitSlider.value = currentStartBit;
+            updateMatchButtons();
+            updateAll();
+        }
+
+        // ==================== 核心渲染与更新 ====================
+        function renderBinaryWithHighlight(binary, start, width) {
+            if (!binary) {
+                binaryDisplay.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            const end = start + width;
+            const targetRaw = matchInput.value.trim();
+            let targetBin = '';
+            
+            if (targetRaw) {
+                targetBin = isHexMode ? parseVerilogHex(targetRaw) : targetRaw.replace(/[^01]/g, '');
+            }
+
+            // 找到所有匹配位置
+            const allMatchRanges = [];
+            if (targetBin && targetBin.length > 0) {
+                let pos = binary.indexOf(targetBin);
+                while (pos !== -1) {
+                    allMatchRanges.push({ start: pos, end: pos + targetBin.length });
+                    pos = binary.indexOf(targetBin, pos + 1);
+                }
+            }
+
+            // 渲染二进制字符串，处理窗口和匹配高亮
+            let currentPos = 0;
+            const totalBits = binary.length;
+
+            // 处理窗口前的部分
+            if (start > 0) {
+                html += renderSegment(binary, 0, start, allMatchRanges);
+            }
+
+            // 处理窗口部分（一整个连续边框）
+            if (start < totalBits) {
+                const windowEnd = Math.min(end, totalBits);
+                const windowContent = binary.substring(start, windowEnd);
+                let windowHtml = '';
+                
+                // 处理窗口内的匹配高亮（仅保留背景色，不额外加边框）
+                for (let i = 0; i < windowContent.length; i++) {
+                    const globalIndex = start + i;
+                    const isMatch = allMatchRanges.some(range => 
+                        globalIndex >= range.start && globalIndex < range.end
+                    );
+                    
+                    if (isMatch) {
+                        windowHtml += `<span class="match-highlight">${windowContent[i]}</span>`;
+                    } else {
+                        windowHtml += windowContent[i];
+                    }
+                }
+                
+                html += `<span class="window-highlight">${windowHtml}</span>`;
+                currentPos = windowEnd;
+            }
+
+            // 处理窗口后的部分
+            if (currentPos < totalBits) {
+                html += renderSegment(binary, currentPos, totalBits, allMatchRanges);
+            }
+
+            binaryDisplay.innerHTML = html;
+        }
+
+        // 渲染二进制片段，处理匹配高亮
+        function renderSegment(binary, start, end, matchRanges) {
+            let html = '';
+            for (let i = start; i < end; i++) {
+                const isMatch = matchRanges.some(range => 
+                    i >= range.start && i < range.end
+                );
+                
+                if (isMatch) {
+                    html += `<span class="match-highlight">${binary[i]}</span>`;
+                } else {
+                    html += binary[i];
+                }
+            }
+            return html;
+        }
+
+        // 输入校验 + 防抖保存历史
+        hexInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+            saveHistory(e.target.value);
+            updateAll();
+        });
+
+        // 失去焦点时立即保存（提前结束防抖）
+        hexInput.addEventListener('blur', () => {
+            clearTimeout(historyDebounceTimer);
+            const value = hexInput.value.trim();
+            if (value) {
+                let history = loadHistory();
+                history = history.filter(item => item !== value);
+                history.unshift(value);
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            }
+        });
+
+        // 控制监听
+        windowSizeInput.addEventListener('input', () => {
+            currentWindowSize = parseInt(windowSizeInput.value) || 1;
+            updateAll();
+        });
+
+        startBitSlider.addEventListener('input', () => {
+            currentStartBit = parseInt(startBitSlider.value);
+            updateAll();
+        });
+
+        matchInput.addEventListener('input', updateAll);
+        typeSwitch.addEventListener('click', switchMatchType);
+        prevMatch.addEventListener('click', () => jumpToMatch(currentMatchIndex - 1));
+        nextMatch.addEventListener('click', () => jumpToMatch(currentMatchIndex + 1));
+
+        // 全局更新
+        function updateAll() {
+            const hexStr = hexInput.value.trim();
+            const windowSize = currentWindowSize;
+            let binaryStr = hexToBinary(hexStr);
+            const totalBits = binaryStr.length;
+
+            startBitSlider.max = Math.max(0, totalBits - 1);
+
+            // 匹配逻辑
+            const targetRaw = matchInput.value.trim();
+            let targetBin = '';
+            
+            if (targetRaw) {
+                if (isHexMode) {
+                    targetBin = parseVerilogHex(targetRaw);
+                } else {
+                    targetBin = targetRaw.replace(/[^01]/g, '');
+                }
+            }
+            
+            matchPositions = findMatchPositions(binaryStr, targetBin);
+            
+            if (matchPositions.length > 0 && currentMatchIndex === -1) {
+                currentMatchIndex = 0;
+                currentStartBit = matchPositions[0];
+                startBitSlider.value = currentStartBit;
+            }
+            updateMatchButtons();
+
+            const startBit = currentStartBit;
+
+            // 渲染二进制（带叠加高亮）
+            renderBinaryWithHighlight(binaryStr, startBit, windowSize);
+
+            // 重组结果
+            currentGroups = [];
+            let resultHTML = '';
+            let highlightedIndex = -1;
+            
+            if (totalBits > 0 && startBit <= totalBits - 1) {
+                const hexPadLength = Math.ceil(windowSize / 4);
+                let currentPos = startBit;
+                let groupIndex = 0;
+                
+                const highlightStart = startBit;
+                const highlightEnd = startBit + windowSize;
+                
+                while (currentPos + windowSize <= totalBits) {
+                    const unitBinary = binaryStr.slice(currentPos, currentPos + windowSize);
+                    const unitHex = binaryToHex(unitBinary, hexPadLength);
+                    
+                    currentGroups.push({ start: currentPos, end: currentPos + windowSize, hex: unitHex, index: groupIndex });
+                    if (currentPos < highlightEnd && (currentPos + windowSize) > highlightStart) highlightedIndex = groupIndex;
+                    
+                    currentPos += windowSize;
+                    groupIndex++;
+                }
+                
+                resultHTML = currentGroups.map((g, i) => 
+                    i === highlightedIndex ? `<span class="window-highlight">${g.hex}</span>` : g.hex
+                ).join(' ');
+            }
+
+            resultOutput.innerHTML = resultHTML || '无有效数据';
+        }
+
+        // 初始化
+        updatePlaceholder();
+        updateAll();
+    </script>
+</body>
+</html>
