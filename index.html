@@ -232,7 +232,7 @@
         .match-group {
             display: flex;
             gap: 12px;
-            align-items: end;
+            align-items: flex-end;
             flex-wrap: wrap;
         }
 
@@ -328,6 +328,23 @@
 
         .history-item:hover {
             background: #e2e2e7;
+        }
+
+        @media (max-width: 520px) {
+            .container {
+                padding: 20px 16px;
+                border-radius: 12px;
+            }
+
+            .match-input {
+                min-width: 0;
+                flex: 1 1 100%;
+            }
+
+            .history-panel {
+                width: 95%;
+                padding: 16px;
+            }
         }
     </style>
 </head>
@@ -680,7 +697,12 @@
             updateAll();
         });
 
-        matchInput.addEventListener('input', () => {
+        matchInput.addEventListener('input', (e) => {
+            if (isHexMode) {
+                e.target.value = e.target.value.replace(/[^0-9a-fA-FhH']/g, '');
+            } else {
+                e.target.value = e.target.value.replace(/[^01]/g, '');
+            }
             currentMatchIndex = -1;
             updateAll();
         });

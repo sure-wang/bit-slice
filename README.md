@@ -2,6 +2,8 @@
 
 FPGA bit slicing and alignment tool - a browser-based utility for visualizing, searching, and re-aligning raw hexadecimal data at the bit level.
 
+**Live demo**: [sure-wang.github.io/bit-slice](https://sure-wang.github.io/bit-slice/)
+
 ## Features
 
 - **Hex-to-Binary Visualization** - Convert hex data to binary and view it as a bit string
@@ -12,7 +14,7 @@ FPGA bit slicing and alignment tool - a browser-based utility for visualizing, s
 
 ## Usage
 
-Open `bit-slice.html` in any modern browser.
+Open the [live demo](https://sure-wang.github.io/bit-slice/) or `index.html` locally in any modern browser.
 
 1. Enter hex data (e.g. `A3F2`) in the input field
 2. Use the slider to select a start bit and adjust the window size
