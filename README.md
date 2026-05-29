@@ -1,5 +1,7 @@
 # Bit Slice
 
+> [中文版](README.zh-CN.md)
+
 FPGA bit slicing and alignment tool - a browser-based utility for visualizing, searching, and re-aligning raw hexadecimal data at the bit level.
 
 **Live demo**: [sure-wang.github.io/bit-slice](https://sure-wang.github.io/bit-slice/)
