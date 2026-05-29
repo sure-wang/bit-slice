@@ -238,7 +238,11 @@
 
         .match-input {
             flex: 1;
-            min-width: 200px;
+            min-width: 400px;
+        }
+
+        .match-input .io-box {
+            width: 100%;
         }
 
         .type-switch {
@@ -335,7 +339,7 @@
         <div class="section">
             <span class="label">原始十六进制数据 (rxdata)</span>
             <div class="input-group">
-                <input type="text" id="hexInput" class="io-box" placeholder="请输入十六进制数 (0-9, a-f, A-F)" maxlength="128">
+                <input type="text" id="hexInput" class="io-box" placeholder="请输入十六进制数 (0-9, a-f, A-F)" maxlength="512">
                 <button class="history-btn" id="historyBtn" title="历史记录">
                     <div class="clock-icon"></div>
                 </button>
@@ -363,6 +367,12 @@
             </div>
         </div>
 
+        <!-- 切片重组结果 -->
+        <div class="section">
+            <span class="label">切片重组十六进制结果</span>
+            <div id="resultOutput" class="result-box" contenteditable="false">无有效数据</div>
+        </div>
+
         <!-- Bit匹配功能模块 -->
         <div class="section">
             <span class="label">Bit序列匹配</span>
@@ -375,12 +385,6 @@
                 <button id="prevMatch" class="nav-btn" disabled>上一个</button>
                 <button id="nextMatch" class="nav-btn" disabled>下一个</button>
             </div>
-        </div>
-
-        <!-- 切片重组结果 -->
-        <div class="section">
-            <span class="label">切片重组十六进制结果</span>
-            <div id="resultOutput" class="result-box" contenteditable="false">无有效数据</div>
         </div>
     </div>
 
@@ -430,7 +434,7 @@
 
         function binaryToHex(binary, padLength) {
             if (!binary) return '';
-            const hex = parseInt(binary, 2).toString(16).toUpperCase();
+            const hex = BigInt('0b' + binary).toString(16).toUpperCase();
             return hex.padStart(padLength, '0');
         }
 
@@ -441,6 +445,7 @@
             
             if (match) {
                 const bitWidth = parseInt(match[1]);
+                if (bitWidth === 0) return '';
                 const hexValue = match[2];
                 // 先转换为完整二进制
                 let binary = hexToBinary(hexValue);
@@ -675,7 +680,10 @@
             updateAll();
         });
 
-        matchInput.addEventListener('input', updateAll);
+        matchInput.addEventListener('input', () => {
+            currentMatchIndex = -1;
+            updateAll();
+        });
         typeSwitch.addEventListener('click', switchMatchType);
         prevMatch.addEventListener('click', () => jumpToMatch(currentMatchIndex - 1));
         nextMatch.addEventListener('click', () => jumpToMatch(currentMatchIndex + 1));
@@ -714,6 +722,12 @@
 
             // 渲染二进制（带叠加高亮）
             renderBinaryWithHighlight(binaryStr, startBit, windowSize);
+
+            // 自动滚动到高亮窗口位置
+            requestAnimationFrame(() => {
+                const el = binaryDisplay.querySelector('.window-highlight');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
 
             // 重组结果
             currentGroups = [];

@@ -19,6 +19,19 @@ Open `bit-slice.html` in any modern browser.
 3. Optionally enter a match pattern (e.g. `7'h3F` or `0011111`) to find and jump to bit sequences
 4. The result shows the re-sliced hex groups
 
+## Limits
+
+- **Input**: up to 512 hex characters (2048 bits), enforced by input field max length
+- **Window size**: up to 512 bits per slice — `binaryToHex` uses BigInt, so there is no practical precision limit within the input cap
+
+## Testing
+
+```bash
+node test.js
+```
+
+Covers hex/binary conversion, Verilog-style parsing (`N'hXX`), bit sequence matching, slice reassembly, and edge cases.
+
 ## License
 
 MIT
