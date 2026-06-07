@@ -34,6 +34,7 @@
         }
 
         .app-header {
+            position: relative;
             margin-bottom: 30px;
             text-align: center;
         }
@@ -48,6 +49,37 @@
         .subtitle {
             font-size: 14px;
             color: #6e6e73;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: inline-flex;
+            padding: 3px;
+            border: 1px solid #e2e2e7;
+            border-radius: 999px;
+            background: #f7f7fa;
+        }
+
+        .lang-btn {
+            min-width: 42px;
+            height: 28px;
+            padding: 0 10px;
+            border: none;
+            border-radius: 999px;
+            background: transparent;
+            color: #6e6e73;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .lang-btn.active {
+            background: white;
+            color: #007aff;
+            box-shadow: 0 1px 4px rgba(20, 24, 31, 0.08);
         }
 
         /* 模块通用样式 */
@@ -133,6 +165,12 @@
             background: #f2f6ff;
             border-color: #c9ddff;
             color: #007aff;
+        }
+
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid rgba(0, 122, 255, 0.45);
+            outline-offset: 2px;
         }
 
         .clock-icon {
@@ -472,6 +510,13 @@
 
             .app-header {
                 margin-bottom: 24px;
+                padding-top: 38px;
+            }
+
+            .lang-switch {
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
             }
 
             .input-group,
@@ -521,20 +566,24 @@
 <body>
     <div class="container">
         <header class="app-header">
+            <div class="lang-switch" aria-label="Language">
+                <button class="lang-btn active" data-lang="zh">中</button>
+                <button class="lang-btn" data-lang="en">EN</button>
+            </div>
             <div class="title">Bit Slice</div>
-            <div class="subtitle">Hex 数据的 bit 级切片、匹配与对齐检查</div>
+            <div class="subtitle" data-i18n="subtitle">Hex 数据的 bit 级切片、匹配与对齐检查</div>
         </header>
 
         <!-- 原始十六进制数据 -->
         <div class="section">
             <div class="section-header">
-                <span class="label">Hex 输入</span>
+                <span class="label" data-i18n="hexInputLabel">Hex 输入</span>
             </div>
             <div class="input-group">
                 <input type="text" id="hexInput" class="io-box" placeholder="粘贴或输入 hex 数据，例如 5E4D6EADA" maxlength="512">
                 <div class="input-actions">
-                    <button class="tool-btn" id="loadExample" title="载入示例数据">示例</button>
-                    <button class="tool-btn" id="clearInput" title="清空输入">清空</button>
+                    <button class="tool-btn" id="loadExample" title="载入示例数据" data-i18n="example">示例</button>
+                    <button class="tool-btn" id="clearInput" title="清空输入" data-i18n="clear">清空</button>
                     <button class="history-btn" id="historyBtn" title="历史记录">
                         <div class="clock-icon"></div>
                     </button>
@@ -545,10 +594,10 @@
         <!-- 二进制可视化（空白初始化） -->
         <div class="section">
             <div class="section-header">
-                <span class="label">Bit 视图</span>
+                <span class="label" data-i18n="bitViewLabel">Bit 视图</span>
                 <div class="legend" aria-label="高亮说明">
-                    <span class="legend-item"><span class="legend-swatch legend-window"></span>当前窗口</span>
-                    <span class="legend-item"><span class="legend-swatch legend-match"></span>匹配结果</span>
+                    <span class="legend-item"><span class="legend-swatch legend-window"></span><span data-i18n="legendWindow">当前窗口</span></span>
+                    <span class="legend-item"><span class="legend-swatch legend-match"></span><span data-i18n="legendMatch">匹配结果</span></span>
                 </div>
             </div>
             <div id="binaryDisplay" class="binary-box"></div>
@@ -556,14 +605,14 @@
 
         <!-- 切片控制 -->
         <div class="section">
-            <span class="label">切片窗口</span>
+            <span class="label" data-i18n="sliceWindowLabel">切片窗口</span>
             <div class="control-group">
                 <div class="slider-container">
-                    <span class="sub-label">起始 bit</span>
+                    <span class="sub-label" data-i18n="startBitLabel">起始 bit</span>
                     <input type="range" id="startBitSlider" min="0" max="0" value="0">
                 </div>
                 <div class="window-size-container">
-                    <span class="sub-label">窗口宽度</span>
+                    <span class="sub-label" data-i18n="windowWidthLabel">窗口宽度</span>
                     <input type="number" id="windowSize" min="1" value="8">
                 </div>
             </div>
@@ -594,10 +643,10 @@
         <!-- 切片重组结果 -->
         <div class="section">
             <div class="section-header">
-                <span class="label">切片结果</span>
+                <span class="label" data-i18n="sliceResultLabel">切片结果</span>
                 <div class="section-actions">
-                    <button class="tool-btn" id="copySlice" title="复制当前窗口的 hex 值">复制当前</button>
-                    <button class="tool-btn" id="copyResult" title="复制全部切片结果">复制结果</button>
+                    <button class="tool-btn" id="copySlice" title="复制当前窗口的 hex 值" data-i18n="copyCurrent">复制当前</button>
+                    <button class="tool-btn" id="copyResult" title="复制全部切片结果" data-i18n="copyResult">复制结果</button>
                 </div>
             </div>
             <div id="resultOutput" class="result-box" contenteditable="false">无有效数据</div>
@@ -605,15 +654,15 @@
 
         <!-- Bit匹配功能模块 -->
         <div class="section">
-            <span class="label">匹配查找</span>
+            <span class="label" data-i18n="matchSearchLabel">匹配查找</span>
             <div class="match-group">
                 <div class="match-input">
-                    <span class="sub-label">匹配序列</span>
+                    <span class="sub-label" data-i18n="matchSequenceLabel">匹配序列</span>
                     <input type="text" id="matchInput" class="io-box" placeholder="例如 3'h5、8'hB7 或 10110111">
                 </div>
                 <button id="typeSwitch" class="type-switch">Hex</button>
-                <button id="prevMatch" class="nav-btn" disabled>上一个</button>
-                <button id="nextMatch" class="nav-btn" disabled>下一个</button>
+                <button id="prevMatch" class="nav-btn" disabled data-i18n="previous">上一个</button>
+                <button id="nextMatch" class="nav-btn" disabled data-i18n="next">下一个</button>
             </div>
         </div>
     </div>
@@ -622,8 +671,8 @@
     <div class="history-modal" id="historyModal">
         <div class="history-panel">
             <div class="history-header">
-                <h3>输入历史记录</h3>
-                <button class="clear-btn" id="clearHistory">清空历史</button>
+                <h3 data-i18n="historyTitle">输入历史记录</h3>
+                <button class="clear-btn" id="clearHistory" data-i18n="clearHistory">清空历史</button>
             </div>
             <div id="historyList"></div>
         </div>
@@ -655,6 +704,8 @@
         const statusMatch = document.getElementById('statusMatch');
         const statusValue = document.getElementById('statusValue');
         const toast = document.getElementById('toast');
+        const langButtons = document.querySelectorAll('.lang-btn');
+        const i18nNodes = document.querySelectorAll('[data-i18n]');
 
         // 全局变量
         let currentGroups = [];
@@ -666,8 +717,91 @@
         let currentMatchIndex = -1;
         let historyDebounceTimer = null;
         let toastTimer = null;
+        let currentLanguage = localStorage.getItem('bit_slice_lang') || 'zh';
         const EXAMPLE_HEX = '5E4D6EADA';
         const EXAMPLE_MATCH = "3'h5";
+        const COPY_SUCCESS = '__copy_success__';
+
+        const translations = {
+            zh: {
+                subtitle: 'Hex 数据的 bit 级切片、匹配与对齐检查',
+                hexInputLabel: 'Hex 输入',
+                hexPlaceholder: '粘贴或输入 hex 数据，例如 5E4D6EADA',
+                example: '示例',
+                clear: '清空',
+                historyTitleAttr: '历史记录',
+                bitViewLabel: 'Bit 视图',
+                legendLabel: '高亮说明',
+                legendWindow: '当前窗口',
+                legendMatch: '匹配结果',
+                sliceWindowLabel: '切片窗口',
+                startBitLabel: '起始 bit',
+                windowWidthLabel: '窗口宽度',
+                sliceResultLabel: '切片结果',
+                copyCurrent: '复制当前',
+                copyResult: '复制结果',
+                copyCurrentTitle: '复制当前窗口的 hex 值',
+                copyResultTitle: '复制全部切片结果',
+                matchSearchLabel: '匹配查找',
+                matchSequenceLabel: '匹配序列',
+                previous: '上一个',
+                next: '下一个',
+                historyTitle: '输入历史记录',
+                clearHistory: '清空历史',
+                emptyHistory: '暂无历史记录',
+                emptyBitView: '输入 hex 后显示 bit 串',
+                emptyResult: '无有效数据',
+                hexMatchPlaceholder: '例如 3\'h5、8\'hB7 或 B7',
+                binMatchPlaceholder: '例如 10110111',
+                confirmClearHistory: '确认清空所有输入历史记录？此操作不可恢复！',
+                exampleLoaded: '已载入示例',
+                copySuccess: '已复制',
+                copyCurrentEmpty: '暂无当前切片',
+                copyResultEmpty: '暂无切片结果',
+                copyFail: '复制失败，请手动选择文本',
+            },
+            en: {
+                subtitle: 'Bit-level slicing, matching, and alignment checks for hex data',
+                hexInputLabel: 'Hex Input',
+                hexPlaceholder: 'Paste or enter hex data, e.g. 5E4D6EADA',
+                example: 'Example',
+                clear: 'Clear',
+                historyTitleAttr: 'History',
+                bitViewLabel: 'Bit View',
+                legendLabel: 'Highlight legend',
+                legendWindow: 'Current window',
+                legendMatch: 'Matches',
+                sliceWindowLabel: 'Slice Window',
+                startBitLabel: 'Start bit',
+                windowWidthLabel: 'Window width',
+                sliceResultLabel: 'Slice Result',
+                copyCurrent: 'Copy Current',
+                copyResult: 'Copy Result',
+                copyCurrentTitle: 'Copy the current window hex value',
+                copyResultTitle: 'Copy all sliced hex results',
+                matchSearchLabel: 'Match Search',
+                matchSequenceLabel: 'Match sequence',
+                previous: 'Previous',
+                next: 'Next',
+                historyTitle: 'Input History',
+                clearHistory: 'Clear History',
+                emptyHistory: 'No history yet',
+                emptyBitView: 'Enter hex to show the bit string',
+                emptyResult: 'No valid data',
+                hexMatchPlaceholder: 'e.g. 3\'h5, 8\'hB7, or B7',
+                binMatchPlaceholder: 'e.g. 10110111',
+                confirmClearHistory: 'Clear all input history? This cannot be undone.',
+                exampleLoaded: 'Example loaded',
+                copySuccess: 'Copied',
+                copyCurrentEmpty: 'No current slice',
+                copyResultEmpty: 'No slice result',
+                copyFail: 'Copy failed. Select the text manually.',
+            },
+        };
+
+        function t(key) {
+            return translations[currentLanguage][key] || translations.zh[key] || key;
+        }
 
         // ==================== 基础转换函数 ====================
         function hexToBinary(hex) {
@@ -699,7 +833,7 @@
             }
             try {
                 await navigator.clipboard.writeText(text);
-                showToast('已复制');
+                showToast(t('copySuccess'));
             } catch (error) {
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
@@ -710,8 +844,33 @@
                 textarea.select();
                 const copied = document.execCommand('copy');
                 document.body.removeChild(textarea);
-                showToast(copied ? '已复制' : '复制失败，请手动选择文本');
+                showToast(copied ? t('copySuccess') : t('copyFail'));
             }
+        }
+
+        function setLanguage(lang) {
+            currentLanguage = translations[lang] ? lang : 'zh';
+            localStorage.setItem('bit_slice_lang', currentLanguage);
+            document.documentElement.lang = currentLanguage === 'zh' ? 'zh-CN' : 'en';
+
+            i18nNodes.forEach(node => {
+                const key = node.dataset.i18n;
+                node.textContent = t(key);
+            });
+
+            langButtons.forEach(button => {
+                button.classList.toggle('active', button.dataset.lang === currentLanguage);
+            });
+
+            hexInput.placeholder = t('hexPlaceholder');
+            historyBtn.title = t('historyTitleAttr');
+            loadExample.title = t('example');
+            clearInput.title = t('clear');
+            copySlice.title = t('copyCurrentTitle');
+            copyResult.title = t('copyResultTitle');
+            document.querySelector('.legend').setAttribute('aria-label', t('legendLabel'));
+            updatePlaceholder();
+            updateAll();
         }
 
         // ==================== Verilog风格十六进制解析 ====================
@@ -765,7 +924,7 @@
             const history = loadHistory();
             historyList.innerHTML = '';
             if (history.length === 0) {
-                historyList.innerHTML = '<div style="text-align:center;padding:20px;color:#86868b">暂无历史记录</div>';
+                historyList.innerHTML = `<div style="text-align:center;padding:20px;color:#86868b">${t('emptyHistory')}</div>`;
                 return;
             }
             history.forEach(item => {
@@ -792,7 +951,7 @@
         };
 
         clearHistory.onclick = () => {
-            if (confirm('确认清空所有输入历史记录？此操作不可恢复！')) {
+            if (confirm(t('confirmClearHistory'))) {
                 localStorage.removeItem(HISTORY_KEY);
                 renderHistory();
             }
@@ -801,9 +960,9 @@
         // ==================== Bit匹配功能 ====================
         function updatePlaceholder() {
             if (isHexMode) {
-                matchInput.placeholder = '例如 3\'h5、8\'hB7 或 B7';
+                matchInput.placeholder = t('hexMatchPlaceholder');
             } else {
-                matchInput.placeholder = '例如 10110111';
+                matchInput.placeholder = t('binMatchPlaceholder');
             }
         }
 
@@ -854,7 +1013,7 @@
         // ==================== 核心渲染与更新 ====================
         function renderBinaryWithHighlight(binary, start, width) {
             if (!binary) {
-                binaryDisplay.innerHTML = '<span class="empty-text">输入 hex 后显示 bit 串</span>';
+                binaryDisplay.innerHTML = `<span class="empty-text">${t('emptyBitView')}</span>`;
                 return;
             }
 
@@ -944,7 +1103,7 @@
             updatePlaceholder();
             saveHistory(hexInput.value);
             updateAll();
-            showToast('已载入示例');
+            showToast(t('exampleLoaded'));
         }
 
         function clearAllInput() {
@@ -1001,8 +1160,11 @@
         nextMatch.addEventListener('click', () => jumpToMatch(currentMatchIndex + 1));
         loadExample.addEventListener('click', loadExampleData);
         clearInput.addEventListener('click', clearAllInput);
-        copySlice.addEventListener('click', () => copyText(currentSliceHex, '暂无当前切片'));
-        copyResult.addEventListener('click', () => copyText(currentGroups.map(g => g.hex).join(' '), '暂无切片结果'));
+        copySlice.addEventListener('click', () => copyText(currentSliceHex, t('copyCurrentEmpty')));
+        copyResult.addEventListener('click', () => copyText(currentGroups.map(g => g.hex).join(' '), t('copyResultEmpty')));
+        langButtons.forEach(button => {
+            button.addEventListener('click', () => setLanguage(button.dataset.lang));
+        });
 
         // 全局更新
         function updateAll() {
@@ -1079,12 +1241,11 @@
                 ).join(' ');
             }
 
-            resultOutput.innerHTML = resultHTML || '<span class="empty-text">无有效数据</span>';
+            resultOutput.innerHTML = resultHTML || `<span class="empty-text">${t('emptyResult')}</span>`;
         }
 
         // 初始化
-        updatePlaceholder();
-        updateAll();
+        setLanguage(currentLanguage);
     </script>
 </body>
 </html>
